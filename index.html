@@ -54,7 +54,30 @@
     </section>
 
     <section class="panel timeline-panel" aria-label="Planning du service">
-      <h2>Planning de la nuit</h2>
+      <div class="panel-header">
+        <h2>Planning de la nuit</h2>
+        <button id="add-task-btn" class="btn ghost small" type="button" aria-expanded="false" aria-controls="add-task-form">+ Ajouter une tâche</button>
+      </div>
+      <form id="add-task-form" class="add-task-form" hidden>
+        <div class="form-grid">
+          <div class="form-row">
+            <label for="new-task-time">Heure</label>
+            <input id="new-task-time" type="time" required />
+          </div>
+          <div class="form-row form-row-grow">
+            <label for="new-task-title">Intitulé</label>
+            <input id="new-task-title" type="text" required maxlength="80" placeholder="Ex : Rappeler chambre 12" />
+          </div>
+        </div>
+        <div class="form-row">
+          <label for="new-task-desc">Détails (optionnel)</label>
+          <textarea id="new-task-desc" rows="2" maxlength="300" placeholder="Infos complémentaires..."></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn primary">Ajouter</button>
+          <button type="button" id="cancel-add-task" class="btn ghost">Annuler</button>
+        </div>
+      </form>
       <ol id="timeline" class="timeline"></ol>
     </section>
 

@@ -195,6 +195,12 @@
     stopAlarm: document.getElementById("stop-alarm"),
     toggleNotifs: document.getElementById("toggle-notifs"),
     resetShift: document.getElementById("reset-shift"),
+    addTaskBtn: document.getElementById("add-task-btn"),
+    addTaskForm: document.getElementById("add-task-form"),
+    newTaskTime: document.getElementById("new-task-time"),
+    newTaskTitle: document.getElementById("new-task-title"),
+    newTaskDesc: document.getElementById("new-task-desc"),
+    cancelAddTask: document.getElementById("cancel-add-task"),
   };
 
   const NOTIF_PREF_KEY = "vdn-notifications-enabled";
@@ -220,6 +226,7 @@
       fired: {},       // { [taskId]: true } -> alerte déjà sonnée
       snoozeUntil: {}, // { [taskId]: timestamp }
       notes: "",
+      customTasks: [], // [{ id, start, title, desc, instant, alert, tag, custom }]
     };
   }
 
@@ -233,7 +240,8 @@
 
   // --- Rendu ---
   function buildSchedule() {
-    const tasks = SCHEDULE.map((t) => {
+    const all = [...SCHEDULE, ...(storageState.customTasks || [])];
+    const tasks = all.map((t) => {
       const startDate = shiftDateFor(t.start, currentShiftStart);
       const endDate = t.instant
         ? startDate
@@ -242,6 +250,7 @@
       if (endDate < startDate) endDate.setDate(endDate.getDate() + 1);
       return { ...t, startDate, endDate };
     });
+    tasks.sort((a, b) => a.startDate - b.startDate);
     return tasks;
   }
 
@@ -263,6 +272,7 @@
       if (isCurrent) li.classList.add("current");
       if ((isPast || isPastInstant) && !isDone) li.classList.add("past");
       if (isSoon) li.classList.add("upcoming-soon");
+      if (t.custom) li.classList.add("custom");
 
       const timeEl = document.createElement("div");
       timeEl.className = "task-time";
@@ -280,7 +290,7 @@
       meta.className = "task-meta";
       if (t.tag) {
         const tag = document.createElement("span");
-        tag.className = "tag";
+        tag.className = "tag" + (t.custom ? " custom" : "");
         tag.textContent = t.tag;
         meta.appendChild(tag);
       }
@@ -289,6 +299,26 @@
         when.className = "tag";
         when.textContent = `✓ Fait à ${new Date(storageState.done[t.id]).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`;
         meta.appendChild(when);
+      }
+      if (t.custom) {
+        const del = document.createElement("button");
+        del.type = "button";
+        del.className = "task-delete";
+        del.setAttribute("aria-label", `Supprimer la tâche "${t.title}"`);
+        del.title = "Supprimer cette tâche";
+        del.textContent = "✕";
+        del.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!confirm(`Supprimer la tâche "${t.title}" ?`)) return;
+          storageState.customTasks = (storageState.customTasks || []).filter((c) => c.id !== t.id);
+          delete storageState.done[t.id];
+          delete storageState.fired[t.id];
+          delete storageState.snoozeUntil[t.id];
+          saveState();
+          update();
+        });
+        meta.appendChild(del);
       }
       body.appendChild(title);
       body.appendChild(desc);
@@ -549,10 +579,56 @@
       saveState();
     });
 
+    els.addTaskBtn.addEventListener("click", () => {
+      const open = !els.addTaskForm.hidden;
+      toggleAddTaskForm(!open);
+    });
+
+    els.cancelAddTask.addEventListener("click", () => {
+      toggleAddTaskForm(false);
+    });
+
+    els.addTaskForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const time = (els.newTaskTime.value || "").trim();
+      const title = (els.newTaskTitle.value || "").trim();
+      const desc = (els.newTaskDesc.value || "").trim();
+      if (!/^\d{2}:\d{2}$/.test(time) || !title) return;
+
+      const id = `custom-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const newTask = {
+        id,
+        start: time,
+        end: time,
+        title,
+        desc: desc || "Tâche ajoutée pour cette nuit.",
+        tag: "Personnalisé",
+        alert: true,
+        instant: true,
+        custom: true,
+      };
+      storageState.customTasks = [...(storageState.customTasks || []), newTask];
+      saveState();
+      toggleAddTaskForm(false);
+      update();
+    });
+
     // Quand la page redevient visible, on recalcule tout (utile après une longue inactivité)
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) update();
     });
+  }
+
+  function toggleAddTaskForm(open) {
+    els.addTaskForm.hidden = !open;
+    els.addTaskBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    els.addTaskBtn.textContent = open ? "Fermer" : "+ Ajouter une tâche";
+    if (open) {
+      els.newTaskTime.value = fmtHM(new Date());
+      els.newTaskTitle.value = "";
+      els.newTaskDesc.value = "";
+      setTimeout(() => els.newTaskTitle.focus(), 50);
+    }
   }
 
   // --- Boucle principale ---
