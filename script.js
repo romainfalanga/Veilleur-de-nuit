@@ -192,11 +192,15 @@
     alarmMessage: document.getElementById("alarm-message"),
     alarmAck: document.getElementById("alarm-acknowledge"),
     alarmSnooze: document.getElementById("alarm-snooze"),
-    testAlarm: document.getElementById("test-alarm"),
     stopAlarm: document.getElementById("stop-alarm"),
-    enableNotifs: document.getElementById("enable-notifs"),
+    toggleNotifs: document.getElementById("toggle-notifs"),
     resetShift: document.getElementById("reset-shift"),
   };
+
+  const NOTIF_PREF_KEY = "vdn-notifications-enabled";
+  const HOTEL_ICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%A8%3C/text%3E%3C/svg%3E";
+
+  let notifsEnabled = localStorage.getItem(NOTIF_PREF_KEY) === "1";
 
   // --- Persistence ---
   function loadState(key) {
@@ -424,11 +428,11 @@
       if (navigator.vibrate) navigator.vibrate([300, 150, 300, 150, 300]);
     } catch {}
     try {
-      if ("Notification" in window && Notification.permission === "granted") {
+      if (notifsEnabled && "Notification" in window && Notification.permission === "granted") {
         new Notification("Veilleur de Nuit — " + task.title, {
           body: task.desc,
           tag: task.id,
-          icon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%99%3C/text%3E%3C/svg%3E",
+          icon: HOTEL_ICON,
         });
       }
     } catch {}
@@ -495,36 +499,36 @@
       dismissAlarm();
     });
 
-    els.testAlarm.addEventListener("click", () => {
-      showAlarm({
-        id: "__test__",
-        start: fmtHM(new Date()),
-        end: fmtHM(new Date()),
-        title: "Test d'alarme",
-        desc: "Ceci est un test. L'alarme fonctionne correctement.",
-        instant: true,
-      });
-    });
-
     els.stopAlarm.addEventListener("click", () => {
       alarmQueue = [];
       dismissAlarm();
     });
 
-    els.enableNotifs.addEventListener("click", async () => {
+    els.toggleNotifs.addEventListener("click", async () => {
       if (!("Notification" in window)) {
-        els.enableNotifs.textContent = "🚫 Notifications indisponibles";
-        els.enableNotifs.disabled = true;
+        els.toggleNotifs.textContent = "🚫 Notifications indisponibles";
+        els.toggleNotifs.disabled = true;
+        return;
+      }
+      if (notifsEnabled) {
+        notifsEnabled = false;
+        localStorage.setItem(NOTIF_PREF_KEY, "0");
+        updateNotifButton();
         return;
       }
       try {
-        const perm = await Notification.requestPermission();
-        if (perm === "granted") {
-          els.enableNotifs.textContent = "✅ Notifications activées";
-          els.enableNotifs.disabled = true;
-        } else {
-          els.enableNotifs.textContent = "🔕 Notifications refusées";
+        let perm = Notification.permission;
+        if (perm === "default") {
+          perm = await Notification.requestPermission();
         }
+        if (perm === "granted") {
+          notifsEnabled = true;
+          localStorage.setItem(NOTIF_PREF_KEY, "1");
+        } else {
+          notifsEnabled = false;
+          localStorage.setItem(NOTIF_PREF_KEY, "0");
+        }
+        updateNotifButton();
       } catch {
         // ignore
       }
@@ -571,12 +575,37 @@
     checkAlerts(tasks, now);
   }
 
+  function updateNotifButton() {
+    if (!("Notification" in window)) {
+      els.toggleNotifs.textContent = "🚫 Notifications indisponibles";
+      els.toggleNotifs.disabled = true;
+      els.toggleNotifs.setAttribute("aria-pressed", "false");
+      return;
+    }
+    if (Notification.permission === "denied") {
+      els.toggleNotifs.textContent = "🚫 Notifications bloquées";
+      els.toggleNotifs.disabled = true;
+      els.toggleNotifs.setAttribute("aria-pressed", "false");
+      notifsEnabled = false;
+      return;
+    }
+    if (notifsEnabled && Notification.permission === "granted") {
+      els.toggleNotifs.textContent = "🔔 Désactiver les notifications";
+      els.toggleNotifs.classList.add("active");
+      els.toggleNotifs.setAttribute("aria-pressed", "true");
+    } else {
+      els.toggleNotifs.textContent = "🔕 Activer les notifications";
+      els.toggleNotifs.classList.remove("active");
+      els.toggleNotifs.setAttribute("aria-pressed", "false");
+    }
+  }
+
   function init() {
     els.notes.value = storageState.notes || "";
-    if ("Notification" in window && Notification.permission === "granted") {
-      els.enableNotifs.textContent = "✅ Notifications activées";
-      els.enableNotifs.disabled = true;
+    if (!("Notification" in window) || Notification.permission !== "granted") {
+      notifsEnabled = false;
     }
+    updateNotifButton();
     bindHandlers();
     update();
     setInterval(update, 1000);
