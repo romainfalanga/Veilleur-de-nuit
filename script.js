@@ -91,7 +91,7 @@
       start: "04:45",
       end: "06:30",
       title: "Mise en place du Petit-Déjeuner",
-      desc: "Préparer et dresser le buffet du petit-déjeuner.\nImprimer la liste petit-déjeuner et la liste des clients restaurant (raccourci F12 sur le logiciel).",
+      desc: "Préparer et dresser le buffet du petit-déjeuner.\nImprimer la liste petit-déjeuner et la liste des clients (raccourci F12 sur le logiciel).",
       tag: "Petit-déjeuner",
       alert: true,
     },
