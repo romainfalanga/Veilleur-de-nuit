@@ -43,7 +43,7 @@ body {
   background:
     radial-gradient(1400px 700px at 15% -10%, #1a2b50 0%, transparent 55%),
     radial-gradient(1000px 500px at 100% 110%, #13294e 0%, transparent 50%),
-    var(--bg) fixed;
+    var(--bg);
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   font-size: clamp(14px, 0.55vw + 12.5px, 16px);
@@ -67,9 +67,7 @@ button {
   position: sticky;
   top: 0;
   z-index: 5;
-  background: linear-gradient(180deg, rgba(11, 18, 32, 0.96), rgba(11, 18, 32, 0.78));
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(10, 16, 30, 0.97);
   border-bottom: 1px solid var(--border-soft);
   padding-top: var(--safe-top);
   padding-left: var(--safe-left);
@@ -152,6 +150,9 @@ button {
     "timeline"
     "notes";
   gap: clamp(16px, 1.8vw, 22px);
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
 }
 
 .status-panel   { grid-area: status; }
@@ -247,8 +248,11 @@ button {
   background: var(--panel-2);
   color: var(--text);
   transition: transform 0.05s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-  min-height: 42px;
+  min-height: 44px;
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  position: relative;
+  z-index: 1;
 }
 
 .btn:hover {
@@ -480,8 +484,9 @@ button {
 .task-desc {
   color: var(--muted);
   font-size: clamp(0.82rem, 0.25vw + 0.78rem, 0.92rem);
-  line-height: 1.45;
+  line-height: 1.5;
   overflow-wrap: anywhere;
+  white-space: pre-line;
 }
 
 .task-meta {
@@ -517,18 +522,21 @@ button {
   border: 1px solid transparent;
   color: var(--muted);
   cursor: pointer;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1;
   padding: 0;
   transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
   margin-left: 4px;
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  position: relative;
+  z-index: 1;
 }
 
 .task-delete:hover {
@@ -549,19 +557,24 @@ button {
   padding: 4px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  position: relative;
+  z-index: 1;
 }
 
 .task-check input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
-  width: clamp(26px, 3vw, 30px);
-  height: clamp(26px, 3vw, 30px);
+  width: clamp(28px, 3.5vw, 32px);
+  height: clamp(28px, 3.5vw, 32px);
   border-radius: var(--radius-sm);
   border: 2px solid var(--border);
   background: var(--bg-soft);
   cursor: pointer;
   position: relative;
   transition: background 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .task-check input[type="checkbox"]:hover {
