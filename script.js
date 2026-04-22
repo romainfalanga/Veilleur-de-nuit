@@ -62,7 +62,7 @@
     {
       id: "veille",
       start: "02:00",
-      end: "05:00",
+      end: "04:45",
       title: "Veille & Présence nocturne",
       desc: "Présence à l'accueil pour la surveillance nocturne.",
       tag: "Veille",
@@ -79,8 +79,8 @@
     },
     {
       id: "cloture-caisse",
-      start: "06:00",
-      end: "06:30",
+      start: "04:45",
+      end: "05:00",
       title: "Clôture de la caisse",
       desc: "Vérification et clôture de la caisse.",
       tag: "Caisse",
